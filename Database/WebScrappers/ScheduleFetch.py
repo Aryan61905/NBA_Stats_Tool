@@ -1,7 +1,7 @@
 
 import requests
 from bs4 import BeautifulSoup
-
+import time
 def dateModifier(date):
     month_dict = {
         "Jan":"01",
@@ -44,7 +44,7 @@ def ScheduleFetch():
     for month in ["october","november","december","january","february","march","april","may","june"]:
         url = f"https://www.basketball-reference.com/leagues/NBA_2024_games-{month}.html"
         response = requests.get(url)
-        
+        time.sleep(7)
         if response.status_code == 200:
             page_content = response.text
             soup = BeautifulSoup(str(page_content), "html.parser")
@@ -69,7 +69,7 @@ def ScheduleFetch():
                             data.append(row_data)
             #print(headers)  
         else:
-            print("Failed to retrieve the webpage.")
+            return response.status_code  
     
     return data
 

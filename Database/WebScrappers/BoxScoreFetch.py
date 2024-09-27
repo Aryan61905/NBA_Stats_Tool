@@ -1,11 +1,13 @@
 
 import requests
 from bs4 import BeautifulSoup
+import time
 
 def BoxScoreFetch(BoxScoreId):
     
     url = f"https://www.basketball-reference.com{BoxScoreId}"
     response = requests.get(url)
+    time.sleep(7)
     if response.status_code == 200:
         page_content = response.text
         soup = BeautifulSoup(str(page_content), 'html.parser')

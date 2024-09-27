@@ -4,7 +4,7 @@ from WebScrappers.ScheduleFetch import ScheduleFetch
 from WebScrappers.BoxScoreFetch import BoxScoreFetch
 from WebScrappers.PlaybyPlayFetch import PlayByPlayFetch
 db_ids= {
-    'Main':'/Users/roy/Desktop/SPIDE/Phase3/Database/NBA_db.db',
+    'Main':'NBA_Stats_Tool/Database/NBA_db.db',
     }
 def connect_db(db_id):
     conn = sqlite3.connect(db_ids[db_id])
@@ -60,16 +60,21 @@ def PlayersTableReset():
 def PlayersTableUpdate():
     PlayersTableReset()
     player_data = PlayerStatsFetch()[1:-1]
-    player_val = ''
-    for pd in player_data:
-        player_val+= f"(null,{str(pd)[1:-1]}), "
+    if type(player_data) != list:
+            print(f"Error fetching PlayerStats \n ErrorCode: {player_data}")
+    else:
+        print("\n************Players Table Update START****************\n")
+        player_val = ''
+        for pd in player_data:
+            player_val+= f"(null,{str(pd)[1:-1]}), "
 
-    updatePlayersTable = f'''
-    INSERT INTO PLAYERS (PlayerId, Rk, Player, Age, Team, Pos, G, GS, MP, FG, FGA, `FG%`, `3P`, `3PA`, `3P%`, `2P`, `2PA`, `2P%`, `eFG%`, FT, FTA, `FT%`, ORB, DRB, TRB, AST, STL, BLK, TOV, PF, PTS, Awards)
-    VALUES {player_val[:-2]};'''
-    conn,cursor = connect_db("Main")
-    cursor.execute(updatePlayersTable)
-    disconnect_db(conn)
+        updatePlayersTable = f'''
+        INSERT INTO PLAYERS (PlayerId, Rk, Player, Age, Team, Pos, G, GS, MP, FG, FGA, `FG%`, `3P`, `3PA`, `3P%`, `2P`, `2PA`, `2P%`, `eFG%`, FT, FTA, `FT%`, ORB, DRB, TRB, AST, STL, BLK, TOV, PF, PTS, Awards)
+        VALUES {player_val[:-2]};'''
+        conn,cursor = connect_db("Main")
+        cursor.execute(updatePlayersTable)
+        disconnect_db(conn)
+        print("\n************Players Table Update END****************\n")
 
 def ScheduleTableReset():
     createScheduleTable = '''
@@ -98,16 +103,22 @@ def ScheduleTableReset():
 def ScheduleTableUpdate():
     ScheduleTableReset()
     schedule_data = ScheduleFetch()
-    schedule_val = ''
-    for sd in schedule_data:
-        schedule_val+= f"(null,{str(sd)[1:-1]}), "
+    if type(schedule_data) != list:
+            print(f"Error fetching Schedule \n ErrorCode: {schedule_data}")
+    else:
+        print("\n************Schedule Table Update START****************\n")
+        schedule_val = ''
+        for sd in schedule_data:
+            schedule_val+= f"(null,{str(sd)[1:-1]}), "
 
-    updateScheduleTable = f'''
-    INSERT INTO SCHEDULE (ScheduleId, Date, StartTime, AwayTeam, AwayTeamPTS, HomeTeam, HomeTeamPTS, BoxScoreId, OverTime, Attendence, LengthOfGame, Arena, Notes)
-    VALUES {schedule_val[:-2]};'''
-    conn,cursor = connect_db("Main")
-    cursor.execute(updateScheduleTable)
-    disconnect_db(conn)
+        updateScheduleTable = f'''
+        INSERT INTO SCHEDULE (ScheduleId, Date, StartTime, AwayTeam, AwayTeamPTS, HomeTeam, HomeTeamPTS, BoxScoreId, OverTime, Attendence, LengthOfGame, Arena, Notes)
+        VALUES {schedule_val[:-2]};'''
+        conn,cursor = connect_db("Main")
+        cursor.execute(updateScheduleTable)
+        disconnect_db(conn)
+        print("\n************Schedule Table Update END****************\n")
+
 
 def BoxScoreTableReset():
 
@@ -180,15 +191,15 @@ def BoxScoreTableReset():
     disconnect_db(conn)
    
 def BoxScoreTableUpdate():
-    #BoxScoreTableReset()
+    
     conn,cursor = connect_db("Main")
     cursor.execute('SELECT BoxScoreId from SCHEDULE where HomeTeamPTS')
-    BoxscoreIds = [i[0] for i in cursor.fetchall()[0:5]]
+    BoxscoreIds = [i[0] for i in cursor.fetchall()]
     cursor.execute('SELECT DISTINCT TOKEN from BOXSCOREBASIC')
     BoxscoreBasicTokens = [i[0] for i in cursor.fetchall()]
     cursor.execute('SELECT DISTINCT TOKEN from BOXSCOREADVANCED')
     BoxscoreAdvancedTokens = [i[0] for i in cursor.fetchall()]
-    
+    print("\n************BOXSCORE Table Update START****************\n")
     for path in BoxscoreIds:
         if path[-17:-5] in BoxscoreAdvancedTokens and path[-17:-5] in BoxscoreBasicTokens:
             print(path[-17:-5],"Already in both BOXSCORE Tables")
@@ -198,6 +209,7 @@ def BoxScoreTableUpdate():
         if type(BoxScoredata) != dict:
             print(f"Error fetching Boxscore path: {path} \n ErrorCode: {BoxScoredata}")
         else:
+            print(f"************SUCCESS boxscore: {path}****************")
             for key in BoxScoredata:
                 boxscore_val = ''
                 for bd in BoxScoredata[key]:
@@ -221,6 +233,7 @@ def BoxScoreTableUpdate():
                         print(path[-17:-5],"Already in Database BOXSCOREADVANCED")
 
     disconnect_db(conn)
+    print("\n************BOXSCORE Table Update END****************\n")
 
 def PlayByPlayReset():
     createPlayByPlayTable = '''
@@ -242,13 +255,13 @@ def PlayByPlayReset():
     disconnect_db(conn)
 
 def PlayByPlayUpdate():
-
+    
     conn,cursor = connect_db("Main")
     cursor.execute('SELECT BoxScoreId from SCHEDULE where HomeTeamPTS')
-    BoxscoreIds = [i[0] for i in cursor.fetchall()[0:5]]
+    BoxscoreIds = [i[0] for i in cursor.fetchall()]
     cursor.execute('SELECT DISTINCT TOKEN from PLAYBYPLAY')
     PlayByPlayTokens = [i[0] for i in cursor.fetchall()]
-
+    print("\n************PLAYBYPLAY Table Update START****************\n")
     for path in BoxscoreIds:
         if path[-17:-5] in PlayByPlayTokens: 
             print(path[-17:-5],"Already in both PLAYBYPLAY Table")
@@ -258,24 +271,24 @@ def PlayByPlayUpdate():
         if type(PlayByPlaydata) != list:
             print(f"Error fetching Boxscore path: {path} \n ErrorCode: {PlayByPlaydata}")
         else:
-            
-                playbyplay_val = ''
-                for pd in PlayByPlaydata:
-                    playbyplay_val += f"(null,{str(pd)[1:-1]}), "
+            print(f"************SUCCESS pbp: {path}****************")
+            playbyplay_val = ''
+            for pd in PlayByPlaydata:
+                playbyplay_val += f"(null,{str(pd)[1:-1]}), "
 
-                updatePlayByPlayTable = f'''
-                INSERT INTO PLAYBYPLAY (PlayByPlayID, Quarter, Time, AwayTeamPlay, AwayTeamScoreDiff, Score, HomeTeamPlay, HomeTeamScoreDiff, Token)
-                VALUES  {playbyplay_val[:-2]};'''
-                if path[-17:-5] not in PlayByPlayTokens:
-                    cursor.execute(updatePlayByPlayTable)
-                else:
-                    print(path[-17:-5],"Already in Database PLAYBYPLAY")
+            updatePlayByPlayTable = f'''
+            INSERT INTO PLAYBYPLAY (PlayByPlayID, Quarter, Time, AwayTeamPlay, AwayTeamScoreDiff, Score, HomeTeamPlay, HomeTeamScoreDiff, Token)
+            VALUES  {playbyplay_val[:-2]};'''
+            if path[-17:-5] not in PlayByPlayTokens:
+                cursor.execute(updatePlayByPlayTable)
+            else:
+                print(path[-17:-5],"Already in Database PLAYBYPLAY")
 
     disconnect_db(conn)
 
 #PlayersTableUpdate()
-#ScheduleTableUpdate()
+ScheduleTableUpdate()
 #BoxScoreTableReset()
-#BoxScoreTableUpdate()
+BoxScoreTableUpdate()
 #PlayByPlayReset()
 PlayByPlayUpdate()
